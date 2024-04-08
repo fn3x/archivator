@@ -31,38 +31,30 @@ containing database connections, ports and users`,
 	Run: func(cmd *cobra.Command, args []string) {
 		scanner := bufio.NewScanner(os.Stdin)
 		if err := viper.ReadInConfig(); err == nil {
-			fmt.Printf("Found config file: %s\nDo you want to continue override existing config file (./archive.config.yaml)? (y/n) ", viper.ConfigFileUsed())
-			var answer string
+			fmt.Printf("Found config file: %s\n\nDo you want to continue and override existing config file? (y/n) ", viper.ConfigFileUsed())
 
-			for {
-        scanner.Scan()
-				answer = scanner.Text()
-				if scanner.Err() != nil {
-					log.Fatal(scanner.Err())
-				}
-
-				if answer != "y" && answer != "n" {
-					fmt.Println("Wrong option")
-				} else {
-					break
-				}
+			scanner.Scan()
+			answer := scanner.Text()
+			if scanner.Err() != nil {
+				log.Fatal(scanner.Err())
 			}
 
-			if answer == "n" {
-				fmt.Println("Exiting init command")
-				return
+			if answer != "y" {
+				fmt.Print("Abort")
+				os.Exit(0)
 			}
 		}
 
-		fmt.Print("Main connection host: ")
-    scanner.Scan()
+		fmt.Print("\n\n--- Main connection ---\n\n")
+		fmt.Print("host: ")
+		scanner.Scan()
 		mainHost := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
 		}
 
-		fmt.Print("Main database port: ")
-    scanner.Scan()
+		fmt.Print("port: ")
+		scanner.Scan()
 		mainPortRead := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
@@ -70,39 +62,41 @@ containing database connections, ports and users`,
 
 		mainPort, err := strconv.Atoi(mainPortRead)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Wrong value provided for port")
+      os.Exit(1)
 		}
 
-		fmt.Print("Main connection user: ")
-    scanner.Scan()
+		fmt.Print("user: ")
+		scanner.Scan()
 		mainUser := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
 		}
 
-		fmt.Print("Main connection password: ")
-    byteMainPassword, err := term.ReadPassword(int(syscall.Stdin))
+		fmt.Print("password: ")
+		byteMainPassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			log.Fatal(scanner.Err())
 		}
-    mainPassword := string(byteMainPassword)
+		mainPassword := string(byteMainPassword)
 
-		fmt.Print("\nMain database name: ")
-    scanner.Scan()
+		fmt.Print("\ndatabase name: ")
+		scanner.Scan()
 		mainDb := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
 		}
 
-		fmt.Print("Archive connection host: ")
-    scanner.Scan()
+		fmt.Print("\n\n--- Archive connection ---\n\n")
+		fmt.Print("host: ")
+		scanner.Scan()
 		archiveHost := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
 		}
 
-		fmt.Print("Archive connection port: ")
-    scanner.Scan()
+		fmt.Print("port: ")
+		scanner.Scan()
 		archivePortRead := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
@@ -110,25 +104,27 @@ containing database connections, ports and users`,
 
 		archivePort, err := strconv.Atoi(archivePortRead)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Wrong value provided for port")
+      os.Exit(1)
 		}
 
-		fmt.Print("Archive connection user: ")
-    scanner.Scan()
+		fmt.Print("user: ")
+		scanner.Scan()
 		archiveUser := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
 		}
 
-		fmt.Print("Archive connection password: ")
-    byteArchivePassword, err := term.ReadPassword(int(syscall.Stdin))
+		fmt.Print("password: ")
+		byteArchivePassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			log.Fatal(scanner.Err())
+			log.Fatal(err)
 		}
-    archivePassword := string(byteArchivePassword)
 
-		fmt.Print("\nArchive database name: ")
-    scanner.Scan()
+		archivePassword := string(byteArchivePassword)
+
+		fmt.Print("\ndatabase name: ")
+		scanner.Scan()
 		archiveDb := scanner.Text()
 		if scanner.Err() != nil {
 			log.Fatal(scanner.Err())
@@ -151,7 +147,7 @@ containing database connections, ports and users`,
 			log.Fatal(err)
 		}
 
-		fmt.Println("Configuration has been successfully saved.")
+		fmt.Println("\nConfiguration has been successfully saved.")
 	},
 }
 
