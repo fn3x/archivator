@@ -1,12 +1,11 @@
 /*
-Copyright © 2024 Art P <fn3x@proton.me>
+Copyright © 2024 Art P fn3x@proton.me
 */
 package cmd
 
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"syscall"
@@ -36,47 +35,52 @@ containing database connections, ports and users`,
 			scanner.Scan()
 			answer := scanner.Text()
 			if scanner.Err() != nil {
-				log.Fatal(scanner.Err())
+				fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+				os.Exit(1)
 			}
 
 			if answer != "y" {
-				fmt.Print("Abort")
+				fmt.Print("Aborted")
 				os.Exit(0)
 			}
 		}
 
-		fmt.Print("\n\n--- Main connection ---\n\n")
+		fmt.Print("\n\n--- Source connection ---\n\n")
 		fmt.Print("host: ")
 		scanner.Scan()
 		mainHost := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		fmt.Print("port: ")
 		scanner.Scan()
 		mainPortRead := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		mainPort, err := strconv.Atoi(mainPortRead)
 		if err != nil {
-			fmt.Println("Wrong value provided for port")
-      os.Exit(1)
+			fmt.Fprint(os.Stderr, "Wrong value provided for port")
+			os.Exit(1)
 		}
 
 		fmt.Print("user: ")
 		scanner.Scan()
 		mainUser := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		fmt.Print("password: ")
 		byteMainPassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 		mainPassword := string(byteMainPassword)
 
@@ -84,41 +88,46 @@ containing database connections, ports and users`,
 		scanner.Scan()
 		mainDb := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
-		fmt.Print("\n\n--- Archive connection ---\n\n")
+		fmt.Print("\n\n--- Destination connection ---\n\n")
 		fmt.Print("host: ")
 		scanner.Scan()
 		archiveHost := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		fmt.Print("port: ")
 		scanner.Scan()
 		archivePortRead := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		archivePort, err := strconv.Atoi(archivePortRead)
 		if err != nil {
 			fmt.Println("Wrong value provided for port")
-      os.Exit(1)
+			os.Exit(1)
 		}
 
 		fmt.Print("user: ")
 		scanner.Scan()
 		archiveUser := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		fmt.Print("password: ")
 		byteArchivePassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprintf(os.Stderr, "Couldn't read password from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		archivePassword := string(byteArchivePassword)
@@ -127,24 +136,26 @@ containing database connections, ports and users`,
 		scanner.Scan()
 		archiveDb := scanner.Text()
 		if scanner.Err() != nil {
-			log.Fatal(scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
-		viper.Set("main.host", mainHost)
-		viper.Set("main.port", mainPort)
-		viper.Set("main.db", mainDb)
-		viper.Set("main.user", mainUser)
-		viper.Set("main.password", mainPassword)
+		viper.Set("source.host", mainHost)
+		viper.Set("source.port", mainPort)
+		viper.Set("source.db", mainDb)
+		viper.Set("source.user", mainUser)
+		viper.Set("source.password", mainPassword)
 
-		viper.Set("archive.host", archiveHost)
-		viper.Set("archive.port", archivePort)
-		viper.Set("archive.db", archiveDb)
-		viper.Set("archive.user", archiveUser)
-		viper.Set("archive.password", archivePassword)
+		viper.Set("destination.host", archiveHost)
+		viper.Set("destination.port", archivePort)
+		viper.Set("destination.db", archiveDb)
+		viper.Set("destination.user", archiveUser)
+		viper.Set("destination.password", archivePassword)
 
 		err = viper.WriteConfig()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprintf(os.Stderr, "Couldn't write config to file: %+v\n", scanner.Err())
+			os.Exit(1)
 		}
 
 		fmt.Println("\nConfiguration has been successfully saved.")
