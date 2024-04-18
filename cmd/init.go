@@ -90,7 +90,7 @@ containing database connections, ports and users`,
 
 		fmt.Print("\ndatabase name: ")
 		scanner.Scan()
-		sourceDb := scanner.Text()
+		sourceDB := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
@@ -142,7 +142,7 @@ containing database connections, ports and users`,
 
 		fmt.Print("\ndatabase name: ")
 		scanner.Scan()
-		destDb := scanner.Text()
+		destDB := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
@@ -156,7 +156,7 @@ containing database connections, ports and users`,
 			viper.Set("source.port", sourcePort)
 		}
 
-		viper.Set("source.db", sourceDb)
+		viper.Set("source.db", sourceDB)
 		viper.Set("source.user", sourceUser)
 		viper.Set("source.password", sourcePassword)
 
@@ -168,7 +168,7 @@ containing database connections, ports and users`,
 			viper.Set("destination.port", destPort)
 		}
 
-		viper.Set("destination.db", destDb)
+		viper.Set("destination.db", destDB)
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
 

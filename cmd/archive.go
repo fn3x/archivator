@@ -32,23 +32,23 @@ var archiveCmd = &cobra.Command{
 		tables := strings.Join(args, ",")
 
 		allArgs := []string{
-      "--source",
-      fmt.Sprintf(`-h="%s"`,viper.GetString("source.host")),
-      fmt.Sprintf(`-D="%s"`,viper.GetString("source.db")),
-      fmt.Sprintf(`-P=%s`,viper.GetString("source.port")),
-      fmt.Sprintf(`-u="%s"`,viper.GetString("source.user")),
-      fmt.Sprintf(`-p="%s"`,viper.GetString("source.password")),
+			"--source",
+			fmt.Sprintf(`-h="%s"`, viper.GetString("source.host")),
+			fmt.Sprintf(`-D="%s"`, viper.GetString("source.db")),
+			fmt.Sprintf(`-P=%s`, viper.GetString("source.port")),
+			fmt.Sprintf(`-u="%s"`, viper.GetString("source.user")),
+			fmt.Sprintf(`-p="%s"`, viper.GetString("source.password")),
 			fmt.Sprintf("-t=%s", tables),
-      "--dest",
-      fmt.Sprintf(`--host="%s"`,viper.GetString("destination.host")),
-      fmt.Sprintf(`--database="%s"`,viper.GetString("destination.db")),
-      fmt.Sprintf(`--port=%s`,viper.GetString("destination.port")),
-      fmt.Sprintf(`--user="%s"`,viper.GetString("destination.user")),
-      fmt.Sprintf(`--password="%s"`,viper.GetString("destination.password")),
+			"--dest",
+			fmt.Sprintf(`--host="%s"`, viper.GetString("destination.host")),
+			fmt.Sprintf(`--database="%s"`, viper.GetString("destination.db")),
+			fmt.Sprintf(`--port=%s`, viper.GetString("destination.port")),
+			fmt.Sprintf(`--user="%s"`, viper.GetString("destination.user")),
+			fmt.Sprintf(`--password="%s"`, viper.GetString("destination.password")),
 			fmt.Sprintf("-t=%s", tables),
-      "--where",
-      `"1=1"`,
-    }
+			"--where",
+			`"1=1"`,
+		}
 
 		cmd := exec.Command("pt-archiver", allArgs...)
 		var stdout, stderr bytes.Buffer

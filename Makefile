@@ -59,6 +59,7 @@ test/cover:
 .PHONY: build
 build:
 	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
+	mkdir -p /tmp/bin/
 	touch /tmp/bin/${BINARY_NAME}
 	go build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
