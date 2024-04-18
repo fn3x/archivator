@@ -40,21 +40,21 @@ containing database connections, ports and users`,
 			}
 
 			if answer != "y" {
-				fmt.Print("Aborted")
+				fmt.Println("Aborted")
 				os.Exit(0)
 			}
 		}
 
-		fmt.Print("\n\n--- Source connection ---\n\n")
-		fmt.Print("host: ")
+		fmt.Print("\n--- Source connection ---\n\n")
+		fmt.Print("host (localhost): ")
 		scanner.Scan()
-		mainHost := scanner.Text()
+		sourceHost := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
 		}
 
-		fmt.Print("port: ")
+		fmt.Print("port (3306): ")
 		scanner.Scan()
 		mainPortRead := scanner.Text()
 		if scanner.Err() != nil {
@@ -62,15 +62,19 @@ containing database connections, ports and users`,
 			os.Exit(1)
 		}
 
-		mainPort, err := strconv.Atoi(mainPortRead)
+		if mainPortRead == "" {
+			mainPortRead = viper.GetString("source.port")
+		}
+
+		sourcePort, err := strconv.Atoi(mainPortRead)
 		if err != nil {
-			fmt.Fprint(os.Stderr, "Wrong value provided for port")
+			fmt.Fprintln(os.Stderr, "Wrong value provided for port")
 			os.Exit(1)
 		}
 
 		fmt.Print("user: ")
 		scanner.Scan()
-		mainUser := scanner.Text()
+		sourceUser := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
@@ -79,29 +83,29 @@ containing database connections, ports and users`,
 		fmt.Print("password: ")
 		byteMainPassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", err)
 			os.Exit(1)
 		}
-		mainPassword := string(byteMainPassword)
+		sourcePassword := string(byteMainPassword)
 
 		fmt.Print("\ndatabase name: ")
 		scanner.Scan()
-		mainDb := scanner.Text()
+		sourceDb := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
 		}
 
 		fmt.Print("\n\n--- Destination connection ---\n\n")
-		fmt.Print("host: ")
+		fmt.Print("host (localhost): ")
 		scanner.Scan()
-		archiveHost := scanner.Text()
+		destHost := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
 		}
 
-		fmt.Print("port: ")
+		fmt.Print("port (3306): ")
 		scanner.Scan()
 		archivePortRead := scanner.Text()
 		if scanner.Err() != nil {
@@ -109,7 +113,11 @@ containing database connections, ports and users`,
 			os.Exit(1)
 		}
 
-		archivePort, err := strconv.Atoi(archivePortRead)
+		if archivePortRead == "" {
+			archivePortRead = viper.GetString("destination.port")
+		}
+
+		destPort, err := strconv.Atoi(archivePortRead)
 		if err != nil {
 			fmt.Println("Wrong value provided for port")
 			os.Exit(1)
@@ -117,7 +125,7 @@ containing database connections, ports and users`,
 
 		fmt.Print("user: ")
 		scanner.Scan()
-		archiveUser := scanner.Text()
+		destUser := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
@@ -126,39 +134,51 @@ containing database connections, ports and users`,
 		fmt.Print("password: ")
 		byteArchivePassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Couldn't read password from stdin: %+v\n", scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't read password from stdin: %+v\n", err)
 			os.Exit(1)
 		}
 
-		archivePassword := string(byteArchivePassword)
+		destPassword := string(byteArchivePassword)
 
 		fmt.Print("\ndatabase name: ")
 		scanner.Scan()
-		archiveDb := scanner.Text()
+		destDb := scanner.Text()
 		if scanner.Err() != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
 		}
 
-		viper.Set("source.host", mainHost)
-		viper.Set("source.port", mainPort)
-		viper.Set("source.db", mainDb)
-		viper.Set("source.user", mainUser)
-		viper.Set("source.password", mainPassword)
+		if sourceHost != "" {
+			viper.Set("source.host", sourceHost)
+		}
 
-		viper.Set("destination.host", archiveHost)
-		viper.Set("destination.port", archivePort)
-		viper.Set("destination.db", archiveDb)
-		viper.Set("destination.user", archiveUser)
-		viper.Set("destination.password", archivePassword)
+		if sourcePort != 0 {
+			viper.Set("source.port", sourcePort)
+		}
 
-		err = viper.WriteConfig()
+		viper.Set("source.db", sourceDb)
+		viper.Set("source.user", sourceUser)
+		viper.Set("source.password", sourcePassword)
+
+		if destHost != "" {
+			viper.Set("destination.host", destHost)
+		}
+
+		if destPort != 0 {
+			viper.Set("destination.port", destPort)
+		}
+
+		viper.Set("destination.db", destDb)
+		viper.Set("destination.user", destUser)
+		viper.Set("destination.password", destPassword)
+
+		err = viper.WriteConfigAs(".archivator.config.yaml")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Couldn't write config to file: %+v\n", scanner.Err())
+			fmt.Fprintf(os.Stderr, "Couldn't write config to file: %+v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Println("\nConfiguration has been successfully saved.")
+		fmt.Printf("\nConfiguration has been successfully saved.\n")
 	},
 }
 
@@ -168,19 +188,19 @@ func init() {
 }
 
 func initConfig() {
-	viper.SetDefault("main.host", "localhost")
-	viper.SetDefault("main.port", "3306")
-	viper.SetDefault("main.db", "database")
-	viper.SetDefault("main.user", "user")
-	viper.SetDefault("main.password", "")
+	viper.SetDefault("source.host", "localhost")
+	viper.SetDefault("source.port", "3306")
+	viper.SetDefault("source.db", "")
+	viper.SetDefault("source.user", "")
+	viper.SetDefault("source.password", "")
 
-	viper.SetDefault("archive.host", "localhost")
-	viper.SetDefault("archive.port", "3306")
-	viper.SetDefault("archive.db", "archive_database")
-	viper.SetDefault("archive.user", "archive_user")
-	viper.SetDefault("archive.password", "")
+	viper.SetDefault("destination.host", "localhost")
+	viper.SetDefault("destination.port", "3306")
+	viper.SetDefault("destination.db", "")
+	viper.SetDefault("destination.user", "")
+	viper.SetDefault("destination.password", "")
 
-	viper.AddConfigPath("./")
+	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
-	viper.SetConfigName("archive.config")
+	viper.SetConfigName(".archivator.config")
 }
