@@ -1,5 +1,5 @@
 # Change these variables as necessary.
-MAIN_PACKAGE_PATH := ./cmd/root.go
+MAIN_PACKAGE_PATH := .
 BINARY_NAME := archivator
 
 # ==================================================================================== #
@@ -59,6 +59,7 @@ test/cover:
 .PHONY: build
 build:
 	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
+	touch /tmp/bin/${BINARY_NAME}
 	go build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 ## run: run the  application
