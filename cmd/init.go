@@ -45,6 +45,14 @@ containing database connections, ports and users`,
 			}
 		}
 
+    fmt.Print("Client (/var/run/mysqld/mysqld.sock): ")
+		scanner.Scan()
+		socket := scanner.Text()
+		if scanner.Err() != nil {
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
+		}
+
 		fmt.Print("\n--- Source connection ---\n\n")
 		fmt.Print("host (localhost): ")
 		scanner.Scan()
@@ -95,6 +103,7 @@ containing database connections, ports and users`,
 			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
 			os.Exit(1)
 		}
+    
 
 		fmt.Print("\n\n--- Destination connection ---\n\n")
 		fmt.Print("host (localhost): ")
@@ -172,6 +181,8 @@ containing database connections, ports and users`,
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
 
+    viper.Set("socket", socket)
+
 		err = viper.WriteConfigAs(".archivator.config.yaml")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Couldn't write config to file: %+v\n", err)
@@ -188,6 +199,7 @@ func init() {
 }
 
 func initConfig() {
+  viper.SetDefault("socket", "/var/run/mysqld/mysqld.sock")
 	viper.SetDefault("source.host", "localhost")
 	viper.SetDefault("source.port", "3306")
 	viper.SetDefault("source.db", "")

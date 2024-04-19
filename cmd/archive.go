@@ -32,22 +32,26 @@ var archiveCmd = &cobra.Command{
 		tables := strings.Join(args, ",")
 
 		allArgs := []string{
+			"--socket",
+			viper.GetString("socket"),
 			"--source",
-			fmt.Sprintf(`-h="%s"`, viper.GetString("source.host")),
-			fmt.Sprintf(`-D="%s"`, viper.GetString("source.db")),
-			fmt.Sprintf(`-P=%s`, viper.GetString("source.port")),
-			fmt.Sprintf(`-u="%s"`, viper.GetString("source.user")),
-			fmt.Sprintf(`-p="%s"`, viper.GetString("source.password")),
-			fmt.Sprintf("-t=%s", tables),
+			fmt.Sprintf("h=%s,D=%s,P=%s,u=%s,p=%s,t=%s",
+				viper.GetString("source.host"),
+				viper.GetString("source.db"),
+				viper.GetString("source.port"),
+				viper.GetString("source.user"),
+				viper.GetString("source.password"),
+				tables),
 			"--dest",
-			fmt.Sprintf(`--host="%s"`, viper.GetString("destination.host")),
-			fmt.Sprintf(`--database="%s"`, viper.GetString("destination.db")),
-			fmt.Sprintf(`--port=%s`, viper.GetString("destination.port")),
-			fmt.Sprintf(`--user="%s"`, viper.GetString("destination.user")),
-			fmt.Sprintf(`--password="%s"`, viper.GetString("destination.password")),
-			fmt.Sprintf("-t=%s", tables),
+			fmt.Sprintf("h=%s,D=%s,P=%s,u=%s,p=%s,t=%s",
+				viper.GetString("destination.host"),
+				viper.GetString("destination.db"),
+				viper.GetString("destination.port"),
+				viper.GetString("destination.user"),
+				viper.GetString("destination.password"),
+				tables),
 			"--where",
-			`"1=1"`,
+			`'1=1'`,
 		}
 
 		cmd := exec.Command("pt-archiver", allArgs...)
@@ -57,13 +61,12 @@ var archiveCmd = &cobra.Command{
 		cmd.Stderr = &stderr
 
 		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(os.Stdout, "exec args: %+v\n", allArgs)
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintf(os.Stderr, "Error: %s\nMessage: %s\n", err, stderr.String())
 			os.Exit(1)
 		}
 
-		fmt.Fprint(os.Stderr, stderr, "\n")
-		fmt.Fprintf(os.Stdout, "Result of the command:\n\n%s\n", stdout.String())
+		fmt.Fprintln(os.Stderr, stderr.String())
+		fmt.Fprintln(os.Stdout, stdout.String())
 	},
 }
 
