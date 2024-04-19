@@ -54,7 +54,7 @@ containing database connections, ports and users`,
 		}
 
 		fmt.Print("\n--- Source connection ---\n\n")
-		fmt.Print("host (localhost): ")
+		fmt.Print("host (127.0.0.1): ")
 		scanner.Scan()
 		sourceHost := scanner.Text()
 		if scanner.Err() != nil {
@@ -106,7 +106,7 @@ containing database connections, ports and users`,
     
 
 		fmt.Print("\n\n--- Destination connection ---\n\n")
-		fmt.Print("host (localhost): ")
+		fmt.Print("host (127.0.0.1): ")
 		scanner.Scan()
 		destHost := scanner.Text()
 		if scanner.Err() != nil {
@@ -200,13 +200,13 @@ func init() {
 
 func initConfig() {
   viper.SetDefault("socket", "/var/run/mysqld/mysqld.sock")
-	viper.SetDefault("source.host", "localhost")
+	viper.SetDefault("source.host", "127.0.0.1")
 	viper.SetDefault("source.port", "3306")
 	viper.SetDefault("source.db", "")
 	viper.SetDefault("source.user", "")
 	viper.SetDefault("source.password", "")
 
-	viper.SetDefault("destination.host", "localhost")
+	viper.SetDefault("destination.host", "127.0.0.1")
 	viper.SetDefault("destination.port", "3306")
 	viper.SetDefault("destination.db", "")
 	viper.SetDefault("destination.user", "")
