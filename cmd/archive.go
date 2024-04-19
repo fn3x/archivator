@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -17,20 +18,18 @@ import (
 var archiveCmd = &cobra.Command{
 	Use:   "archive",
 	Short: "Archive tables",
-	Long:  `archives tables from source database to destination database specified in config using pt-archiver`,
+	Long:  `Archive tables from source database to destination database specified in config using pt-archiver`,
 	Args:  cobra.MinimumNArgs(1),
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		if err := viper.ReadInConfig(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %+v\n\n", err)
-			fmt.Fprintln(os.Stderr, "Create one using command:  archivator init")
-			os.Exit(1)
+			return err
 		}
 
 		tables := strings.Join(args, ",")
 
 		allArgs := []string{
-      "--progress",
-      viper.GetString("progress"),
+			"--progress",
+			viper.GetString("progress"),
 			"--socket",
 			viper.GetString("socket"),
 			"--source",
@@ -60,17 +59,16 @@ var archiveCmd = &cobra.Command{
 		cmd.Stderr = &stderr
 
 		if err := cmd.Run(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %s\nMessage: %s\n", err, stderr.String())
-			os.Exit(1)
+			return errors.New(fmt.Sprintf("%s %s", err.Error(), stderr.String()))
 		}
 
 		fmt.Fprintln(os.Stderr, stderr.String())
 		fmt.Fprintln(os.Stdout, stdout.String())
-		fmt.Println(stdout.String())
+		return nil
 	},
 }
 
 func init() {
+  initConfig()
 	rootCmd.AddCommand(archiveCmd)
-	initConfig()
 }
