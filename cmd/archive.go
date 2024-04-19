@@ -21,17 +21,16 @@ var archiveCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(command *cobra.Command, args []string) {
 		if err := viper.ReadInConfig(); err != nil {
-			fmt.Fprintf(
-				os.Stderr,
-				"Couldn't read from config file: %+v\n",
-				err,
-			)
+			fmt.Fprintf(os.Stderr, "Error: %+v\n\n", err)
+			fmt.Fprintln(os.Stderr, "Create one using command:  archivator init")
 			os.Exit(1)
 		}
 
 		tables := strings.Join(args, ",")
 
 		allArgs := []string{
+      "--progress",
+      viper.GetString("progress"),
 			"--socket",
 			viper.GetString("socket"),
 			"--source",
@@ -67,6 +66,7 @@ var archiveCmd = &cobra.Command{
 
 		fmt.Fprintln(os.Stderr, stderr.String())
 		fmt.Fprintln(os.Stdout, stdout.String())
+		fmt.Println(stdout.String())
 	},
 }
 

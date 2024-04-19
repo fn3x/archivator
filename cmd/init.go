@@ -53,6 +53,14 @@ containing database connections, ports and users`,
 			os.Exit(1)
 		}
 
+    fmt.Print("Output progress every nth row (100): ")
+		scanner.Scan()
+		progress := scanner.Text()
+		if scanner.Err() != nil {
+			fmt.Fprintf(os.Stderr, "Couldn't read from stdin: %+v\n", scanner.Err())
+			os.Exit(1)
+		}
+
 		fmt.Print("\n--- Source connection ---\n\n")
 		fmt.Print("host (127.0.0.1): ")
 		scanner.Scan()
@@ -181,6 +189,7 @@ containing database connections, ports and users`,
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
 
+    viper.Set("progress", progress)
     viper.Set("socket", socket)
 
 		err = viper.WriteConfigAs(".archivator.config.yaml")
@@ -199,6 +208,7 @@ func init() {
 }
 
 func initConfig() {
+  viper.SetDefault("progress", "100")
   viper.SetDefault("socket", "/var/run/mysqld/mysqld.sock")
 	viper.SetDefault("source.host", "127.0.0.1")
 	viper.SetDefault("source.port", "3306")
