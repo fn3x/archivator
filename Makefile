@@ -63,6 +63,11 @@ build:
 	touch /tmp/bin/${BINARY_NAME}
 	go build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
+## install: install the application
+.PHONY: install
+install:
+	go install ${MAIN_PACKAGE_PATH}
+
 ## run: run the  application
 .PHONY: run
 run: build
