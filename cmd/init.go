@@ -25,8 +25,8 @@ var (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Create config file",
-	Long: `Create config file .archi.config.yml in the current directory
-containing database connections, ports and users`,
+	Long: `
+Create config file .archi.config.yml in the current directory with database connections, ports and users`,
 	Args: cobra.MaximumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		scanner := bufio.NewScanner(os.Stdin)

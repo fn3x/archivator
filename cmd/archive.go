@@ -17,7 +17,18 @@ import (
 var archiveCmd = &cobra.Command{
 	Use:   "archive --table=table_name --where='where_clause' [--table=... --where='...' ...]",
 	Short: "Archive tables",
-	Long:  `Archive tables from source database to destination database specified in config using pt-archiver`,
+	Long: `
+Archive tables using created config ('init' command) from source database to destination database with pt-archiver.
+
+It is split into two separate commands:
+
+    pt-archiver --no-delete ...
+
+and
+
+    pt-archiver --purge ...
+
+for safety measures.`,
 	RunE: func(command *cobra.Command, args []string) error {
 		if err := viper.ReadInConfig(); err != nil {
 			return errors.New(fmt.Sprintf("%+v\n\n%s", err, "To create config file:\n  archive init"))
@@ -80,6 +91,40 @@ var archiveCmd = &cobra.Command{
 
 			fmt.Fprintln(os.Stderr, stderr.String())
 			fmt.Fprintln(os.Stdout, stdout.String())
+
+			deleteArgs := []string{
+				"--progress",
+				"10",
+				"--purge",
+				"--primary-key-only",
+				"--commit-each",
+				"--statistics",
+				"--why-quit",
+				"--socket",
+				viper.GetString("socket"),
+				"--source",
+				fmt.Sprintf("h=%s,D=%s,P=%s,u=%s,p=%s,t=%s",
+					viper.GetString("source.host"),
+					viper.GetString("source.db"),
+					viper.GetString("source.port"),
+					viper.GetString("source.user"),
+					viper.GetString("source.password"),
+					tables[i]),
+				"--where",
+				fmt.Sprintf("'%s'", wheres[i]),
+			}
+
+			cmd = exec.Command("pt-archiver", deleteArgs...)
+
+			cmd.Stdout = &stdout
+			cmd.Stderr = &stderr
+
+			if err := cmd.Run(); err != nil {
+				return errors.New(fmt.Sprintf("%s\n%s", err.Error(), stderr.String()))
+			}
+
+			fmt.Fprintln(os.Stderr, stderr.String())
+			fmt.Fprintln(os.Stdout, stdout.String())
 		}
 
 		return nil
@@ -90,7 +135,8 @@ func init() {
 	initConfig()
 
 	archiveCmd.SetUsageTemplate(`
-archive --table=table_name --where='where_clause' [--table ... --where='...' ...]
+Usage:
+  archive --table=table_name --where='where_clause' [--table ... --where='...' ...]
 
 Flags:
   -h, --help            help for archive
