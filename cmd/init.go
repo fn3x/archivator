@@ -25,7 +25,7 @@ var (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Create config file",
-	Long: `Create config file archive.config.yml in the current directory
+	Long: `Create config file .archi.config.yml in the current directory
 containing database connections, ports and users`,
 	Args: cobra.MaximumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -202,5 +202,5 @@ func initConfig() {
 
 	viper.AddConfigPath(".")
 	viper.SetConfigType("yaml")
-	viper.SetConfigName(".archivator.config")
+	viper.SetConfigName(".archi.config")
 }

@@ -1,6 +1,6 @@
 # Change these variables as necessary.
 MAIN_PACKAGE_PATH := .
-BINARY_NAME := archivator
+BINARY_NAME := archi
 
 # ==================================================================================== #
 # HELPERS

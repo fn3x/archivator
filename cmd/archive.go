@@ -15,12 +15,12 @@ import (
 )
 
 var archiveCmd = &cobra.Command{
-	Use:   "archive",
+	Use:   "archive --table=table_name --where='where_clause' [--table=... --where='...' ...]",
 	Short: "Archive tables",
 	Long:  `Archive tables from source database to destination database specified in config using pt-archiver`,
 	RunE: func(command *cobra.Command, args []string) error {
 		if err := viper.ReadInConfig(); err != nil {
-			return err
+			return errors.New(fmt.Sprintf("%+v\n\n%s", err, "To create config file:\n  archive init"))
 		}
 
 		tables, err := command.PersistentFlags().GetStringSlice("table")
@@ -88,9 +88,19 @@ var archiveCmd = &cobra.Command{
 
 func init() {
 	initConfig()
+
+	archiveCmd.SetUsageTemplate(`
+archive --table=table_name --where='where_clause' [--table ... --where='...' ...]
+
+Flags:
+  -h, --help            help for archive
+  -t, --table strings   table to archive
+  -w, --where strings   where-clause to filter rows
+`)
+
 	archiveCmd.PersistentFlags().StringSliceP("table", "t", []string{}, "table to archive")
-  archiveCmd.MarkPersistentFlagRequired("table")
 	archiveCmd.PersistentFlags().StringSliceP("where", "w", []string{}, "where-clause to filter rows")
-  archiveCmd.MarkPersistentFlagRequired("where")
+	archiveCmd.MarkFlagsRequiredTogether("table", "where")
+
 	rootCmd.AddCommand(archiveCmd)
 }
