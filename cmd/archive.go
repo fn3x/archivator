@@ -23,12 +23,12 @@ var archiveCmd = &cobra.Command{
 			return err
 		}
 
-		tables, err := command.Flags().GetStringSlice("table")
+		tables, err := command.PersistentFlags().GetStringSlice("table")
 		if err != nil {
 			return err
 		}
 
-		wheres, err := command.Flags().GetStringSlice("where")
+		wheres, err := command.PersistentFlags().GetStringSlice("where")
 		if err != nil {
 			return err
 		}
@@ -89,6 +89,8 @@ var archiveCmd = &cobra.Command{
 func init() {
 	initConfig()
 	archiveCmd.PersistentFlags().StringSliceP("table", "t", []string{}, "table to archive")
+  archiveCmd.MarkPersistentFlagRequired("table")
 	archiveCmd.PersistentFlags().StringSliceP("where", "w", []string{}, "where-clause to filter rows")
+  archiveCmd.MarkPersistentFlagRequired("where")
 	rootCmd.AddCommand(archiveCmd)
 }
