@@ -52,13 +52,6 @@ containing database connections, ports and users`,
 			return scanner.Err()
 		}
 
-		fmt.Print("Output progress every nth row (100): ")
-		scanner.Scan()
-		progress := scanner.Text()
-		if scanner.Err() != nil {
-			return scanner.Err()
-		}
-
 		fmt.Print("\n--- Source connection ---\n\n")
 		fmt.Print("host (127.0.0.1): ")
 		scanner.Scan()
@@ -174,7 +167,6 @@ containing database connections, ports and users`,
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
 
-		viper.Set("progress", progress)
 		viper.Set("socket", socket)
 		viper.Set("progress", "100")
 
@@ -195,7 +187,6 @@ func init() {
 }
 
 func initConfig() {
-	viper.SetDefault("progress", "100")
 	viper.SetDefault("socket", "/var/run/mysqld/mysqld.sock")
 	viper.SetDefault("source.host", "127.0.0.1")
 	viper.SetDefault("source.port", "3306")
