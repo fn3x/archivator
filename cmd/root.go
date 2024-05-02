@@ -12,6 +12,7 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "archivator",
+  Version: "1.0.0",
 	Short: "CLI tool for archiving tables of MySQL databases using pt-archiver",
 }
 
