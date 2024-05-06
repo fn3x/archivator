@@ -48,6 +48,10 @@ for safety measures.`,
 			return errors.New("Number of tables and where-clauses should match")
 		}
 
+		if len(tables) == 0 {
+			return errors.New("No arguments provided")
+		}
+
 		for i := 0; i < len(tables); i++ {
 			args := []string{
 				"--progress",

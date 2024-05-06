@@ -170,7 +170,7 @@ Create config file .archi.config.yml in the current directory with database conn
 		viper.Set("socket", socket)
 		viper.Set("progress", "100")
 
-		err = viper.WriteConfigAs(".archivator.config.yaml")
+		err = viper.WriteConfigAs(".archi.config.yaml")
 		if err != nil {
 			return errors.New(fmt.Sprintf("Couldn't write config to file: %+v\n", err))
 		}
