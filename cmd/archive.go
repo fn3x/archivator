@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -21,7 +20,7 @@ var archiveCmd = &cobra.Command{
 Archive tables using created config ('init' command) from source database to destination database with pt-archiver.`,
 	RunE: func(command *cobra.Command, args []string) error {
 		if err := viper.ReadInConfig(); err != nil {
-			return errors.New(fmt.Sprintf("%+v\n\n%s", err, "To create config file:\n  archive init"))
+			return fmt.Errorf("%+v\n\n%s", err, "To create config file:\n  archive init")
 		}
 
 		tables, err := command.PersistentFlags().GetStringSlice("table")
@@ -35,11 +34,11 @@ Archive tables using created config ('init' command) from source database to des
 		}
 
 		if len(tables) != len(wheres) {
-			return errors.New("Number of tables and where-clauses should match")
+			return fmt.Errorf("number of tables and where-clauses should match")
 		}
 
 		if len(tables) == 0 {
-			return errors.New("No arguments provided")
+			return fmt.Errorf("no arguments provided")
 		}
 
 		for i := 0; i < len(tables); i++ {
@@ -79,7 +78,7 @@ Archive tables using created config ('init' command) from source database to des
 			cmd.Stderr = &stderr
 
 			if err := cmd.Run(); err != nil {
-				return errors.New(fmt.Sprintf("%s\n%s", err.Error(), stderr.String()))
+				return fmt.Errorf("%s\n%s", err.Error(), stderr.String())
 			}
 
 			fmt.Fprintln(os.Stderr, stderr.String())

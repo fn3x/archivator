@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -73,7 +72,7 @@ Create config file .archi.config.yml in the current directory with database conn
 
 		sourcePort, err := strconv.Atoi(mainPortRead)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Wrong value provided for port"))
+			return fmt.Errorf("wrong value provided for port")
 		}
 
 		fmt.Print("user: ")
@@ -118,7 +117,7 @@ Create config file .archi.config.yml in the current directory with database conn
 
 		destPort, err := strconv.Atoi(archivePortRead)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Wrong value provided for port"))
+			return fmt.Errorf("wrong value provided for port")
 		}
 
 		fmt.Print("user: ")
@@ -131,7 +130,7 @@ Create config file .archi.config.yml in the current directory with database conn
 		fmt.Print("password: ")
 		byteArchivePassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
-			return errors.New(fmt.Sprintf("Couldn't read password from stdin: %+v\n", err))
+			return fmt.Errorf("couldn't read password from stdin: %+v", err)
 		}
 
 		destPassword := string(byteArchivePassword)
@@ -172,7 +171,7 @@ Create config file .archi.config.yml in the current directory with database conn
 
 		err = viper.WriteConfigAs(".archi.config.yaml")
 		if err != nil {
-			return errors.New(fmt.Sprintf("Couldn't write config to file: %+v\n", err))
+			return fmt.Errorf("couldn't write config to file: %+v", err)
 		}
 
 		fmt.Printf("\nConfiguration has been successfully saved.\n")
