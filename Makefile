@@ -2,6 +2,9 @@
 MAIN_PACKAGE_PATH := .
 BINARY_NAME := archi
 
+OS := linux windows darwin
+ARCH := amd64 arm64
+
 # ==================================================================================== #
 # HELPERS
 # ==================================================================================== #
@@ -58,10 +61,18 @@ test/cover:
 ## build: build the application
 .PHONY: build
 build:
-	# Include additional build steps, like TypeScript, SCSS or Tailwind compilation here...
-	mkdir -p /tmp/bin/
-	touch /tmp/bin/${BINARY_NAME}
-	go build -o=/tmp/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+	mkdir -p ./bin/
+	rm -r ./bin
+	@for os in $(OS) ; do \
+		for arch in $(ARCH) ; do \
+			if [ $${os} = windows ]; then \
+				CGO_ENABLED=0 GOOS=$${os} GOARCH=$${arch} go build -o=./bin/${BINARY_NAME}_$${os}_$${arch}.exe ${MAIN_PACKAGE_PATH} ; \
+			else \
+				CGO_ENABLED=0 GOOS=$${os} GOARCH=$${arch} go build -o=./bin/${BINARY_NAME}_$${os}_$${arch} ${MAIN_PACKAGE_PATH} ; \
+			fi \
+		done ; \
+	done
+
 
 ## install: install the application
 .PHONY: install
