@@ -18,7 +18,30 @@ log_message() {
   echo $MESSAGE
 }
 
-# Run archivator and capture stdout and stderr
-./bin/archi_linux_amd64 archive --table=transactions --where="requestTime <= $timestamp" 2>&1 | while IFS= read -r line; do
+# Run archivator for DEPENDANT tables and capture stdout and stderr
+./bin/archi_linux_amd64 archive \
+  --table=transactions --where="requestTime <= $timestamp" \
+  --table=transactions --where="requestTime <= $timestamp" \
+  --table=transactions --where="requestTime <= $timestamp" \
+  2>&1 | while IFS= read -r line; do
+
+  log_message "$line"
+done
+
+./bin/archi_linux_amd64 archive \
+  --table=transactions --where="requestTime <= $timestamp" \
+  --table=transactions --where="requestTime <= $timestamp" \
+  --table=transactions --where="requestTime <= $timestamp" \
+  2>&1 | while IFS= read -r line; do
+
+  log_message "$line"
+done
+
+./bin/archi_linux_amd64 archive \
+  --table=transactions --where="requestTime <= $timestamp" \
+  --table=transactions --where="requestTime <= $timestamp" \
+  --table=transactions --where="requestTime <= $timestamp" \
+  2>&1 | while IFS= read -r line; do
+
   log_message "$line"
 done
