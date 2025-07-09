@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"syscall"
 
@@ -38,11 +39,28 @@ Create config file archi.json in the current directory with database connections
 			}
 		}
 
-		fmt.Print("Client (/var/run/mysqld/mysqld.sock): ")
-		scanner.Scan()
-		socket := scanner.Text()
-		if scanner.Err() != nil {
-			return scanner.Err()
+		if runtime.GOOS == "linux" {
+			fmt.Print("MySQL socket location (/var/run/mysqld/mysqld.sock): ")
+			scanner.Scan()
+			socket := scanner.Text()
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
+
+			if socket != "" {
+				viper.Set("socket", "/var/run/mysqld/mysqld.sock")
+			}
+		} else if runtime.GOOS == "darwin" {
+			fmt.Print("MySQL socket location (/tmp/mysql.sock): ")
+			scanner.Scan()
+			socket := scanner.Text()
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
+
+			if socket != "" {
+				viper.Set("socket", "/tmp/mysql.sock")
+			}
 		}
 
 		fmt.Print("\n--- Source connection ---\n\n")
@@ -152,15 +170,13 @@ Create config file archi.json in the current directory with database connections
 			viper.Set("destination.host", destHost)
 		}
 
-		if destPort != 0 {
+		if destPort > 0 {
 			viper.Set("destination.port", destPort)
 		}
 
 		viper.Set("destination.db", destDB)
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
-
-		viper.Set("socket", socket)
 
 		err = viper.WriteConfigAs("archi.json")
 		if err != nil {
@@ -179,7 +195,7 @@ func init() {
 }
 
 func initConfig() {
-	viper.SetDefault("socket", "/var/run/mysqld/mysqld.sock")
+	viper.SetDefault("socket", "")
 	viper.SetDefault("source.host", "127.0.0.1")
 	viper.SetDefault("source.port", "3306")
 	viper.SetDefault("source.db", "")
