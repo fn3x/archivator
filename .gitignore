@@ -25,3 +25,6 @@ bin/
 go.work
 
 *.yaml
+
+.env*
+.direnv*
