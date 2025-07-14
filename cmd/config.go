@@ -39,7 +39,8 @@ Create config file archi.json in the current directory with database connections
 			}
 		}
 
-		if runtime.GOOS == "linux" {
+		switch runtime.GOOS {
+		case "linux":
 			fmt.Print("MySQL socket location (/var/run/mysqld/mysqld.sock): ")
 			scanner.Scan()
 			socket := scanner.Text()
@@ -50,7 +51,7 @@ Create config file archi.json in the current directory with database connections
 			if socket != "" {
 				viper.Set("socket", "/var/run/mysqld/mysqld.sock")
 			}
-		} else if runtime.GOOS == "darwin" {
+		case "darwin":
 			fmt.Print("MySQL socket location (/tmp/mysql.sock): ")
 			scanner.Scan()
 			socket := scanner.Text()
