@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 Art P fn3x@proton.me
+Copyright © 2025 fn3x <fn3x@proton.me>
 */
 package cmd
 
@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"syscall"
 
@@ -15,17 +16,11 @@ import (
 	"golang.org/x/term"
 )
 
-var (
-	Verbose bool
-	Source  string
-)
-
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init",
+var cfgCmd = &cobra.Command{
+	Use:   "config",
 	Short: "Create config file",
 	Long: `
-Create config file .archi.config.yml in the current directory with database connections, ports and users`,
+Create config file archi.json in the current directory with database connections, ports and users`,
 	Args: cobra.MaximumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -44,11 +39,29 @@ Create config file .archi.config.yml in the current directory with database conn
 			}
 		}
 
-		fmt.Print("Client (/var/run/mysqld/mysqld.sock): ")
-		scanner.Scan()
-		socket := scanner.Text()
-		if scanner.Err() != nil {
-			return scanner.Err()
+		switch runtime.GOOS {
+		case "linux":
+			fmt.Print("MySQL socket location (/var/run/mysqld/mysqld.sock): ")
+			scanner.Scan()
+			socket := scanner.Text()
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
+
+			if socket != "" {
+				viper.Set("socket", "/var/run/mysqld/mysqld.sock")
+			}
+		case "darwin":
+			fmt.Print("MySQL socket location (/tmp/mysql.sock): ")
+			scanner.Scan()
+			socket := scanner.Text()
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
+
+			if socket != "" {
+				viper.Set("socket", "/tmp/mysql.sock")
+			}
 		}
 
 		fmt.Print("\n--- Source connection ---\n\n")
@@ -158,7 +171,7 @@ Create config file .archi.config.yml in the current directory with database conn
 			viper.Set("destination.host", destHost)
 		}
 
-		if destPort != 0 {
+		if destPort > 0 {
 			viper.Set("destination.port", destPort)
 		}
 
@@ -166,10 +179,7 @@ Create config file .archi.config.yml in the current directory with database conn
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
 
-		viper.Set("socket", socket)
-		viper.Set("progress", "100")
-
-		err = viper.WriteConfigAs(".archi.config.yaml")
+		err = viper.WriteConfigAs("archi.json")
 		if err != nil {
 			return fmt.Errorf("couldn't write config to file: %+v", err)
 		}
@@ -182,11 +192,11 @@ Create config file .archi.config.yml in the current directory with database conn
 
 func init() {
 	initConfig()
-	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(cfgCmd)
 }
 
 func initConfig() {
-	viper.SetDefault("socket", "/var/run/mysqld/mysqld.sock")
+	viper.SetDefault("socket", "")
 	viper.SetDefault("source.host", "127.0.0.1")
 	viper.SetDefault("source.port", "3306")
 	viper.SetDefault("source.db", "")
@@ -200,6 +210,6 @@ func initConfig() {
 	viper.SetDefault("destination.password", "")
 
 	viper.AddConfigPath(".")
-	viper.SetConfigType("yaml")
-	viper.SetConfigName(".archi.config")
+	viper.SetConfigType("json")
+	viper.SetConfigName("archi")
 }

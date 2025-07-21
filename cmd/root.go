@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 Art P fn3x@proton.me
+Copyright © 2025 fn3x <fn3x@proton.me>
 */
 package cmd
 
@@ -9,11 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:     "archi",
-	Version: "1.0.0",
-	Short:   "CLI tool for archiving tables of MySQL databases using pt-archiver",
+	Use:   "archi",
+	Short: "Archive MySQL tables",
+	Long:  `Archive MySQL tables`,
 }
 
 func Execute() {
@@ -21,4 +20,7 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func init() {
 }

@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 Art P fn3x@proton.me
+Copyright © 2025 fn3x fn3x@proton.me
 */
 package main
 
