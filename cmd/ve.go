@@ -19,18 +19,23 @@ var veCmd = &cobra.Command{
 			return fmt.Errorf("%+v\n\n%s", err, "To create config file:\n  archi config")
 		}
 
-		fks, err := cmd.Flags().GetStringSlice("foreign-key")
+		relatedKeys, err := cmd.Flags().GetStringSlice("related-key")
 		if err != nil {
 			return err
 		}
 
-		fts, err := cmd.Flags().GetStringSlice("foreign-table")
+		relatedTables, err := cmd.Flags().GetStringSlice("related-table")
 		if err != nil {
 			return err
 		}
 
-		if len(fks) != len(fts) {
-			return fmt.Errorf("number of foreign keys and foreign tables should match")
+		relatedTimestampCols, err := cmd.Flags().GetStringSlice("related-timestamp-col")
+		if err != nil {
+			return err
+		}
+
+		if len(relatedKeys) != len(relatedTables) || len(relatedKeys) != len(relatedTimestampCols) || len(relatedTables) != len(relatedTimestampCols) {
+			return fmt.Errorf("number of related keys, tables and timestamp columns should match")
 		}
 
 		table, err := cmd.Flags().GetString("table")
@@ -62,23 +67,25 @@ var veCmd = &cobra.Command{
 func init() {
 	veCmd.SetUsageTemplate(`
 Usage:
-      ve --table=table_name --foreign-table='foreign_table' --foreign-key='foreign_key' [--foreign-table='another_foreign_table' --foreign-key='another_foreign_key']
+      ve --table=table_name --related-table='related_table' --related-key='related_key' --related-timestamp-col='timestamp_col' [--related-table='another_related_table' --related-key='another_related_key' --related-timestamp-col='timestamp_col']
 
 Flags:
-      -p, --purge           delete copied rows from source table
-      -t, --foreign-table   name of the dependant table
-      -k, --foreign-key     foreign key of the dependant table
-      -h, --help            show this
-          --table           table to archive
-          --limit           how many rows to archive
+  	      --table                 table to archive
+      -p, --purge                 delete targeted rows from source table
+      -t, --related-table         name of the dependant table
+      -k, --related-key           related key of the dependant table
+      		--related-timestamp-col related timestamp column of the dependant table
+      -h, --help                  show this
+          --limit                 how many rows to archive
 `)
 	veCmd.Flags().String("table", "", "table to archive")
 	veCmd.Flags().Bool("purge", false, "delete rows from source table")
 	veCmd.Flags().String("limit", "100", "how many rows to archive")
-	veCmd.Flags().StringSliceP("foreign-table", "t", []string{}, "name of the dependant table")
-	veCmd.Flags().StringSliceP("foreign-key", "k", []string{}, "foreign key of the dependant table")
+	veCmd.Flags().StringSliceP("related-table", "t", []string{}, "name of the dependant table")
+	veCmd.Flags().StringSliceP("related-key", "k", []string{}, "related key of the dependant table")
+	veCmd.Flags().StringSlice("related-timestamp-col", []string{}, "related timestamp column of the dependant table")
 
-	veCmd.MarkFlagsRequiredTogether("foreign-key", "foreign-table")
+	veCmd.MarkFlagsRequiredTogether("related-key", "related-table", "related-timestamp-col")
 
 	rootCmd.AddCommand(veCmd)
 }
