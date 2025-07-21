@@ -13,11 +13,11 @@ import (
 )
 
 type ArchiveConfig struct {
-	db         *sql.DB
-	tables     []Table
-	cutoffDate time.Time
-	outputDir  string
-	limit      int32
+	DB         *sql.DB
+	Tables     []Table
+	CutoffDate time.Time
+	OutputDir  string
+	Limit      int32
 }
 
 type Table struct {
@@ -29,7 +29,11 @@ type Table struct {
 	Purge           bool
 }
 
-func ConnectDB(config mysql.Config) (*sql.DB, error) {
+func NewArchiveConfig() *ArchiveConfig {
+	return &ArchiveConfig{}
+}
+
+func ConnectDB(config *mysql.Config) (*sql.DB, error) {
 	db, err := sql.Open("mysql", config.FormatDSN())
 	if err != nil {
 		return nil, err
@@ -105,14 +109,14 @@ func archiveOldData(db *sql.DB, tableName string, timestampCol string, cutoffDat
 	return nil
 }
 
-func archiveRelatedData(config ArchiveConfig, table Table, cutoffDate time.Time) error {
+func archiveRelatedData(config *ArchiveConfig, table Table, cutoffDate time.Time) error {
 	query := `
 		SELECT DISTINCT r.* FROM ?? r 
 		JOIN ?? m ON r.?? = m.id 
 		WHERE m.?? < ?
 		LIMIT ?`
 
-	rows, err := config.db.Query(query, table.Name, table.RefTable, table.RefColumn, table.RefTimestampCol, cutoffDate.Format(time.RFC3339), config.limit)
+	rows, err := config.DB.Query(query, table.Name, table.RefTable, table.RefColumn, table.RefTimestampCol, cutoffDate.Format(time.RFC3339), config.Limit)
 	if err != nil {
 		return err
 	}
@@ -131,7 +135,7 @@ func archiveRelatedData(config ArchiveConfig, table Table, cutoffDate time.Time)
 		return fmt.Errorf("Table %s doesn't contain timestamp column with the name %s", table.RefTable, table.RefTimestampCol)
 	}
 
-	filename := fmt.Sprintf("%s/%s.csv", config.outputDir, table.Name)
+	filename := fmt.Sprintf("%s/%s.csv", config.OutputDir, table.Name)
 	fmt.Printf("Archiving related data from %s...\n", table.Name)
 
 	file, err := os.Create(filename)
@@ -180,21 +184,21 @@ func deleteArchivedData(db *sql.DB, tableName string, timestampCol string, cutof
 	return err
 }
 
-func deleteRelatedArchivedData(config ArchiveConfig, table Table, cutoffDate time.Time) error {
+func deleteRelatedArchivedData(config *ArchiveConfig, table Table, cutoffDate time.Time) error {
 	fmt.Printf("Deleting archived data from %s...\n", table.Name)
-	_, err := config.db.Exec(`DELETE FROM ?? 
+	_, err := config.DB.Exec(`DELETE FROM ?? 
 		WHERE ?? IN (
 			SELECT id FROM ?? WHERE ?? < ?
 		)`, table.Name, table.RefColumn, table.RefTable, table.RefTimestampCol, cutoffDate.Format(time.RFC3339))
 	return err
 }
 
-func Archive(config ArchiveConfig) error {
-	if err := helpers.AssertError(config.limit == 0, "Expected rows limit to be greater than zero"); err != nil {
+func Archive(config *ArchiveConfig) error {
+	if err := helpers.AssertError(config.Limit == 0, "Expected rows limit to be greater than zero"); err != nil {
 		return err
 	}
 
-	for _, table := range config.tables {
+	for _, table := range config.Tables {
 		if err := helpers.AssertError(table.Name != "", "Expected table to have a name"); err != nil {
 			return err
 		}
@@ -214,30 +218,30 @@ func Archive(config ArchiveConfig) error {
 		}
 	}
 
-	for _, table := range config.tables {
+	for _, table := range config.Tables {
 		if table.TimestampCol == "" {
-			if err := archiveRelatedData(config, table, config.cutoffDate); err != nil {
+			if err := archiveRelatedData(config, table, config.CutoffDate); err != nil {
 				return fmt.Errorf("failed to archive %s: %v", table.Name, err)
 			}
 		} else {
-			if err := archiveOldData(config.db, table.Name, table.TimestampCol, config.cutoffDate, config.limit); err != nil {
+			if err := archiveOldData(config.DB, table.Name, table.TimestampCol, config.CutoffDate, config.Limit); err != nil {
 				return fmt.Errorf("failed to archive %s: %v", table.Name, err)
 			}
 		}
 	}
 
-	for i := len(config.tables) - 1; i >= 0; i-- {
-		table := config.tables[i]
+	for i := len(config.Tables) - 1; i >= 0; i-- {
+		table := config.Tables[i]
 		if table.TimestampCol == "" && table.Purge {
-			if err := deleteRelatedArchivedData(config, table, config.cutoffDate); err != nil {
+			if err := deleteRelatedArchivedData(config, table, config.CutoffDate); err != nil {
 				return fmt.Errorf("failed to delete from %s: %v", table.Name, err)
 			}
 		}
 	}
 
-	for _, table := range config.tables {
+	for _, table := range config.Tables {
 		if table.TimestampCol == "" && table.Purge {
-			if err := deleteArchivedData(config.db, table.Name, table.TimestampCol, config.cutoffDate); err != nil {
+			if err := deleteArchivedData(config.DB, table.Name, table.TimestampCol, config.CutoffDate); err != nil {
 				return fmt.Errorf("failed to delete from %s: %v", table.Name, err)
 			}
 		}

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
+	database "github.com/fn3x/archivator/internal/db"
+	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -57,6 +59,24 @@ var veCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		dbConfig := mysql.NewConfig()
+		dbConfig.Addr = fmt.Sprintf("%s:%s", viper.GetString("source.host"), viper.GetString("source.port"))
+		dbConfig.User = viper.GetString("source.user")
+		dbConfig.Passwd = viper.GetString("source.password")
+
+		db, err := database.ConnectDB(dbConfig)
+
+		if err != nil {
+			return err
+		}
+
+		archiveConfig := database.NewArchiveConfig()
+		archiveConfig.DB = db
+		archiveConfig.Limit = int32(limit)
+		archiveConfig.OutputDir = "./"
+
+		database.Archive(archiveConfig)
 
 		fmt.Printf("ve called with following arguments: --table=%s --limit=%d --purge=%t", table, limit, purge)
 
