@@ -71,7 +71,7 @@ Usage:
 
 Flags:
   	      --table                 table to archive
-      -p, --purge                 delete targeted rows from source table
+      -p, --purge                 delete rows from the table
       -t, --related-table         name of the dependant table
       -k, --related-key           related key of the dependant table
       		--related-timestamp-col related timestamp column of the dependant table
@@ -79,7 +79,7 @@ Flags:
           --limit                 how many rows to archive
 `)
 	veCmd.Flags().String("table", "", "table to archive")
-	veCmd.Flags().Bool("purge", false, "delete rows from source table")
+	veCmd.Flags().BoolSliceP("purge", "p", []bool{}, "delete rows from the table")
 	veCmd.Flags().String("limit", "100", "how many rows to archive")
 	veCmd.Flags().StringSliceP("related-table", "t", []string{}, "name of the dependant table")
 	veCmd.Flags().StringSliceP("related-key", "k", []string{}, "related key of the dependant table")
