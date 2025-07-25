@@ -39,6 +39,48 @@ Create config file archi.json in the current directory with database connections
 			}
 		}
 
+		isFile := true
+
+		for {
+			fmt.Print("Archive to a (f)ile or to a (d)atabase: ")
+
+			scanner.Scan()
+			answer := scanner.Text()
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
+
+			if answer == "f" || answer == "F" {
+				break
+			}
+
+			if answer == "d" || answer == "D" {
+				isFile = false
+				break
+			}
+		}
+
+		if isFile {
+			viper.SetDefault("outputDir", "./")
+
+			pwd, err := os.Getwd()
+			if err != nil {
+				pwd = "./"
+			}
+
+			fmt.Printf("Output directory (%s): ", pwd)
+
+			scanner.Scan()
+			outputDir := scanner.Text()
+			if scanner.Err() != nil {
+				return scanner.Err()
+			}
+
+			if outputDir != "" {
+				viper.Set("outputDir", outputDir)
+			}
+		}
+
 		switch runtime.GOOS {
 		case "linux":
 			fmt.Print("MySQL socket location (/var/run/mysqld/mysqld.sock): ")
@@ -107,6 +149,37 @@ Create config file archi.json in the current directory with database connections
 		sourceDB := scanner.Text()
 		if scanner.Err() != nil {
 			return scanner.Err()
+		}
+
+		defer func() {
+			if err != nil {
+				fmt.Printf("%+v", err)
+				return
+			}
+
+			err = viper.WriteConfigAs("archi.json")
+			if err != nil {
+				fmt.Printf("couldn't write config to file: %+v", err)
+				return
+			}
+
+			fmt.Printf("\nConfiguration has been successfully saved.\n")
+		}()
+
+		if isFile {
+			if sourceHost != "" {
+				viper.Set("source.host", sourceHost)
+			}
+
+			if sourcePort != 0 {
+				viper.Set("source.port", sourcePort)
+			}
+
+			viper.Set("source.db", sourceDB)
+			viper.Set("source.user", sourceUser)
+			viper.Set("source.password", sourcePassword)
+
+			return nil
 		}
 
 		fmt.Print("\n\n--- Destination connection ---\n\n")
@@ -179,13 +252,6 @@ Create config file archi.json in the current directory with database connections
 		viper.Set("destination.user", destUser)
 		viper.Set("destination.password", destPassword)
 
-		err = viper.WriteConfigAs("archi.json")
-		if err != nil {
-			return fmt.Errorf("couldn't write config to file: %+v", err)
-		}
-
-		fmt.Printf("\nConfiguration has been successfully saved.\n")
-
 		return nil
 	},
 }
@@ -202,12 +268,6 @@ func initConfig() {
 	viper.SetDefault("source.db", "")
 	viper.SetDefault("source.user", "")
 	viper.SetDefault("source.password", "")
-
-	viper.SetDefault("destination.host", "127.0.0.1")
-	viper.SetDefault("destination.port", "3306")
-	viper.SetDefault("destination.db", "")
-	viper.SetDefault("destination.user", "")
-	viper.SetDefault("destination.password", "")
 
 	viper.AddConfigPath(".")
 	viper.SetConfigType("json")

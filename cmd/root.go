@@ -10,9 +10,11 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "archi",
-	Short: "Archive MySQL tables",
-	Long:  `Archive MySQL tables`,
+	Use:     "archi",
+	Short:   "Archive MySQL tables",
+	Long:    `Cli tool to archive MySQL tables with timestamp columns as well as tables
+with foreign keys pointing to the tables containing timestamp columns`,
+	Version: "1.0.0",
 }
 
 func Execute() {

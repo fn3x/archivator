@@ -13,7 +13,7 @@ func Assert(expected bool, message string) {
 
 func AssertError(expected bool, message string) error {
 	if !expected {
-		return fmt.Errorf("ASSERTION ERROR: %s", message)
+		return fmt.Errorf("ASSERTION ERROR: %s\n", message)
 	}
 
 	return nil
