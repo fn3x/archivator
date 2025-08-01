@@ -63,8 +63,13 @@ func ConnectDB(config *mysql.Config, ctx context.Context) (*sql.DB, error) {
 	return db, nil
 }
 
-func archiveOldData(db *sql.DB, tableName string, timestampCol string, cutoffDate time.Time, limit int32) error {
+// archives to a file and returns slice of ids
+func archiveOldData(db *sql.DB, tableName string, timestampCol string, cutoffDate time.Time, limit int32) ([]uint64, error) {
+	ids := make([]uint64, 0, limit)
+
 	cutoffFormatted := cutoffDate.Format(time.RFC3339)
+	fmt.Printf("Archiving rows from %s with cutoff date %s\n", tableName, cutoffFormatted)
+
 	query, args, err := sq.Select("*").
 		From(tableName).
 		Where(fmt.Sprintf("%s < ?", timestampCol), cutoffFormatted).
@@ -73,29 +78,27 @@ func archiveOldData(db *sql.DB, tableName string, timestampCol string, cutoffDat
 		ToSql()
 
 	if err != nil {
-		return err
+		return ids, err
 	}
 
 	fmt.Printf("Query:%s\nArgs:%+v\n\n", query, args)
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
-		return err
+		return ids, err
 	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
 	if err != nil {
-		return err
+		return ids, err
 	}
-
-	fmt.Printf("Archiving rows from %s with cutoff date %s\n", tableName, cutoffFormatted)
 
 	filename := fmt.Sprintf("archived_%s_till_%s_at_%s.csv", tableName, timestampCol, time.Now().UTC().Format(time.RFC3339))
 
 	file, err := os.Create(filename)
 	if err != nil {
-		return err
+		return ids, err
 	}
 	defer file.Close()
 
@@ -113,7 +116,7 @@ func archiveOldData(db *sql.DB, tableName string, timestampCol string, cutoffDat
 		}
 
 		if err := rows.Scan(valuePtrs...); err != nil {
-			return err
+			return ids, err
 		}
 
 		record := make([]string, len(columns))
@@ -124,17 +127,32 @@ func archiveOldData(db *sql.DB, tableName string, timestampCol string, cutoffDat
 				record[i] = string(b)
 			} else {
 				record[i] = fmt.Sprintf("%v", val)
+				if columns[i] == "id" {
+					if v, ok := val.(uint64); ok {
+						ids = append(ids, v)
+					} else if v, ok := val.(int64); ok {
+						ids = append(ids, uint64(v))
+					} else if v, ok := val.(int32); ok {
+						ids = append(ids, uint64(v))
+					} else if v, ok := val.(uint32); ok {
+						ids = append(ids, uint64(v))
+					}
+				}
 			}
 		}
 
 		writer.Write(record)
 	}
 
-	return nil
+	return ids, nil
 }
 
-func archiveRelatedData(db *sql.DB, table Table, cutoffDate time.Time, limit int32) error {
+// archives to a file and returns slice of ids
+func archiveRelatedData(db *sql.DB, table Table, cutoffDate time.Time, limit int32) ([]uint64, error) {
+	ids := make([]uint64, 0, limit)
+
 	cutoffFormatted := cutoffDate.Format(time.RFC3339)
+	fmt.Printf("Archiving rows from %s with cutoff date %s\n", table.Name, cutoffFormatted)
 
 	query, args, err := sq.
 		Select(fmt.Sprintf("%s.*", table.Name)).
@@ -142,32 +160,31 @@ func archiveRelatedData(db *sql.DB, table Table, cutoffDate time.Time, limit int
 		Join(fmt.Sprintf("%s ON %s.%s = %s.id", table.RefTable, table.Name, table.RefColumn, table.RefTable)).
 		Where(fmt.Sprintf("%s.%s < ?", table.RefTable, table.RefTimestampCol), cutoffFormatted).
 		Limit(uint64(limit)).
+		OrderBy("id").
 		ToSql()
 
 	fmt.Printf("Query:%s\nArgs:%+v\n\n", query, args)
 
 	if err != nil {
-		return err
+		return ids, err
 	}
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
-		return err
+		return ids, err
 	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
 	if err != nil {
-		return err
+		return ids, err
 	}
-
-	fmt.Printf("Archiving rows from %s with cutoff date %s\n", table.Name, cutoffFormatted)
 
 	filename := fmt.Sprintf("archived_%s_till_%s_at_%s.csv", table.Name, cutoffFormatted, time.Now().UTC().Format(time.RFC3339))
 
 	file, err := os.Create(filename)
 	if err != nil {
-		return err
+		return ids, err
 	}
 	defer file.Close()
 
@@ -185,7 +202,7 @@ func archiveRelatedData(db *sql.DB, table Table, cutoffDate time.Time, limit int
 		}
 
 		if err := rows.Scan(valuePtrs...); err != nil {
-			return err
+			return ids, err
 		}
 
 		record := make([]string, len(columns))
@@ -196,49 +213,53 @@ func archiveRelatedData(db *sql.DB, table Table, cutoffDate time.Time, limit int
 				record[i] = string(b)
 			} else {
 				record[i] = fmt.Sprintf("%v", val)
+				if columns[i] == "id" {
+					if v, ok := val.(uint64); ok {
+						ids = append(ids, v)
+					} else if v, ok := val.(int64); ok {
+						ids = append(ids, uint64(v))
+					} else if v, ok := val.(int32); ok {
+						ids = append(ids, uint64(v))
+					} else if v, ok := val.(uint32); ok {
+						ids = append(ids, uint64(v))
+					}
+				}
 			}
 		}
 
 		writer.Write(record)
 	}
 
-	return nil
+	return ids, nil
 }
 
-func deleteArchivedData(db *sql.DB, table Table, cutoffDate time.Time) error {
-	cutoffFormatted := cutoffDate.Format(time.RFC3339)
-	fmt.Printf("Deleting archived data from %s until %s...\n", table.Name, cutoffFormatted)
-
+func deleteArchivedData(db *sql.DB, table Table, ids []uint64) error {
 	query, args, err := sq.
 		Delete(table.Name).
-		Where(fmt.Printf("%s < %s", table.TimestampCol, cutoffFormatted)).
+		Where(sq.Eq{"id": ids}).
 		ToSql()
 
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Query:%s\nArgs:%+v\n\n", query, args)
 
 	_, err = db.Exec(query, args...)
 	return err
 }
 
-func deleteRelatedArchivedData(db *sql.DB, table Table, cutoffDate time.Time) error {
-	cutoffFormatted := cutoffDate.Format(time.RFC3339)
-	fmt.Printf("Deleting archived data from %s until %s...\n", table.Name, cutoffFormatted)
-
-	subquery := sq.
-		Select("id").
-		From(table.RefTable).
-		Where(fmt.Sprintf("%s < %s", table.RefTimestampCol, cutoffFormatted))
-
+func deleteRelatedArchivedData(db *sql.DB, table Table, ids []uint64) error {
 	query, args, err := sq.
 		Delete(table.Name).
-		Where(sq.Expr(fmt.Sprintf("%s IN (?)", table.RefColumn), subquery)).
+		Where(sq.Eq{"id": ids}).
 		ToSql()
 
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Query:%s\nArgs:%+v\n\n", query, args)
 
 	_, err = db.Exec(query, args...)
 
@@ -271,24 +292,26 @@ func Archive(config *ArchiveConfig) error {
 	}
 
 	if table.TimestampCol == "" {
-		if err := archiveRelatedData(config.DB, table, config.CutoffDate, config.Limit); err != nil {
+		ids, err := archiveRelatedData(config.DB, table, config.CutoffDate, config.Limit)
+		if err != nil {
 			return fmt.Errorf("failed to archive %s: %v\n", table.Name, err)
+		}
+
+		if config.Purge {
+			if err := deleteArchivedData(config.DB, table, ids); err != nil {
+				return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
+			}
 		}
 	} else {
-		if err := archiveOldData(config.DB, table.Name, table.TimestampCol, config.CutoffDate, config.Limit); err != nil {
+		ids, err := archiveOldData(config.DB, table.Name, table.TimestampCol, config.CutoffDate, config.Limit)
+		if err != nil {
 			return fmt.Errorf("failed to archive %s: %v\n", table.Name, err)
 		}
-	}
 
-	if table.TimestampCol == "" && config.Purge {
-		if err := deleteRelatedArchivedData(config.DB, table, config.CutoffDate); err != nil {
-			return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
-		}
-	}
-
-	if table.TimestampCol == "" && config.Purge {
-		if err := deleteArchivedData(config.DB, table, config.CutoffDate); err != nil {
-			return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
+		if config.Purge {
+			if err := deleteRelatedArchivedData(config.DB, table, ids); err != nil {
+				return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
+			}
 		}
 	}
 
@@ -299,6 +322,11 @@ func ArchiveMany(config *ArchiveManyConfig) error {
 	if err := helpers.AssertError(config.Limit > 0, "Expected rows limit to be greater than zero"); err != nil {
 		return err
 	}
+
+	tablesIds := make([]struct {
+		name string
+		ids  []uint64
+	}, 0, len(config.Tables))
 
 	for _, table := range config.Tables {
 		if err := helpers.AssertError(table.Name != "", "Expected table to have a name"); err != nil {
@@ -320,25 +348,81 @@ func ArchiveMany(config *ArchiveManyConfig) error {
 		}
 
 		if table.TimestampCol == "" {
-			if err := archiveRelatedData(config.DB, table, config.CutoffDate, config.Limit); err != nil {
+			ids, err := archiveRelatedData(config.DB, table, config.CutoffDate, config.Limit)
+			if err != nil {
 				return fmt.Errorf("failed to archive %s: %v\n", table.Name, err)
 			}
+
+			if config.Purge {
+				tablesIds = append(tablesIds, struct {
+					name string
+					ids  []uint64
+				}{
+					name: table.Name,
+					ids:  ids,
+				})
+			}
 		} else {
-			if err := archiveOldData(config.DB, table.Name, table.TimestampCol, config.CutoffDate, config.Limit); err != nil {
+			ids, err := archiveOldData(config.DB, table.Name, table.TimestampCol, config.CutoffDate, config.Limit)
+			if err != nil {
 				return fmt.Errorf("failed to archive %s: %v\n", table.Name, err)
+			}
+
+			if config.Purge {
+				tablesIds = append(tablesIds, struct {
+					name string
+					ids  []uint64
+				}{
+					name: table.Name,
+					ids:  ids,
+				})
+			}
+		}
+	}
+
+	if !config.Purge {
+		return nil
+	}
+
+	for _, table := range config.Tables {
+		var ids []uint64
+	inner:
+		for _, v := range tablesIds {
+			if v.name == table.Name {
+				ids = v.ids
+				break inner
+			}
+		}
+
+		if len(ids) == 0 {
+			fmt.Printf("No ids found for table %s. Not deleting rows\n", table.Name)
+			continue
+		}
+
+		if table.TimestampCol == "" {
+			if err := deleteRelatedArchivedData(config.DB, table, ids); err != nil {
+				return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
 			}
 		}
 	}
 
 	for _, table := range config.Tables {
-		if table.TimestampCol == "" && config.Purge {
-			if err := deleteRelatedArchivedData(config.DB, table, config.CutoffDate); err != nil {
-				return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
+		var ids []uint64
+	inner_related:
+		for _, v := range tablesIds {
+			if v.name == table.Name {
+				ids = v.ids
+				break inner_related
 			}
 		}
 
-		if table.TimestampCol == "" && config.Purge {
-			if err := deleteArchivedData(config.DB, table, config.CutoffDate); err != nil {
+		if len(ids) == 0 {
+			fmt.Printf("No ids found for table %s. Not deleting rows\n", table.Name)
+			continue
+		}
+
+		if table.TimestampCol != "" {
+			if err := deleteArchivedData(config.DB, table, ids); err != nil {
 				return fmt.Errorf("failed to delete from %s: %v\n", table.Name, err)
 			}
 		}

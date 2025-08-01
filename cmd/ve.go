@@ -187,17 +187,17 @@ var veCmd = &cobra.Command{
 }
 
 func init() {
-	veCmd.SetUsageTemplate(`
-Usage:
+	veCmd.SetUsageTemplate(`Usage:
       ve --table=table_name --timestamp-col=requestTime [--cutoff=2025-06-06 --limit=100 --purge]
       ve --table=table_name --related-table='related_table' --related-key='related_key' --related-timestamp-col='timestamp_col' [--cutoff=2025-06-06 --limit=100 --purge]
-			ve --code=m:table_name:timestamp_col [--cutoff=2025-06-06 --limit=100 --purge]
-			ve --code=r:table_name:relate_table:related_key:related_timestamp_col [--cutoff=2025-06-06 --limit=100 --purge]
+      ve --code=m:table_name:timestamp_col [--cutoff=2025-06-06 --limit=100 --purge]
+      ve --code=r:table_name:relate_table:related_key:related_timestamp_col [--cutoff=2025-06-06 --limit=100 --purge]
+      ve --code=m:table_name:timestamp_col;r:table_name:relate_table:related_key:related_timestamp_col [--cutoff=2025-06-06 --limit=100 --purge]
 
 Flags:
       -p, --purge                 delete rows from the table(s) (default: false)
-					--limit                 how many rows to archive from the table(s) (default: 100)
-					--cutoff       					cutoff timestamp (default: now)
+          --limit                 how many rows to archive from the table(s) (default: 100)
+          --cutoff                cutoff timestamp (default: now)
           --table                 table to archive
           --timestamp-col         timestamp column of the table
           --related-table         name of the dependant table
